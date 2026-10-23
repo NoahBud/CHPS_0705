@@ -9,14 +9,13 @@ Ouvrir `index.html` dans un navigateur (double-clic). Aucune installation néces
 
 ## Scénario à montrer
 
-1. **Développeur** : les bugs B1 (`-1` révèle la réponse) et B2 (`1001` fait gagner) sont déjà renseignés. On peut en ajouter, les désactiver, et régler le délai avant « exploité ».
-2. **Joueur** : proposer quelques nombres, puis `-1` → le bug se déclenche.
-3. Le Hub prévient Orion → `HubAdapter` convertit → `GestionnaireBugs` sauvegarde le clip vidéo et crée l'`EvenementBug`.
-4. Si le joueur clique sur **Signaler** avant la fin du délai → état `REPORTE`.
-   Sinon → `EXPLOITE_NON_REPORTE` (détection automatique, sans report du joueur).
-5. Un signalement sans bug prévu en attente est rangé à part (bug non prévu ?).
+1. **Développeur** : les bugs 1 (`-1` révèle la réponse) et 2 (`1001` fait gagner) sont déjà déclarés. On peut en ajouter, les désactiver, et régler le délai avant « exploité ».
+2. **Joueur** : proposer quelques nombres, puis `-1` → le bug se déclenche dans le jeu.
+3. Le **Jeu** (fait par les développeurs, dans leur format) envoie lui-même un message → `HubAdapteur.convertir(message)` le traduit en `EvenementBug` → `Gestionnaire.traiterBug()` → `EnregistreurVideo.enregistrer()` sauvegarde les 5 dernières minutes.
+4. Si le joueur clique sur **Signaler un bug** avant la fin du délai → `timestamp_sign` est rempli → état **reporté**.
+   Sinon `timestamp_sign` reste `null` après le délai → état **exploité** (calculé à partir des timestamps, sans attribut en plus).
 
-Le bandeau du haut s'allume sur la classe appelée, et le journal liste chaque appel de méthode.
+À l'écran : le diagramme du haut s'allume sur la classe appelée, le panneau « Objets en mémoire » montre chaque instance et ses attributs en direct, et le journal liste chaque appel de méthode.
 
 ## Organisation du code
 
@@ -24,71 +23,52 @@ Le bandeau du haut s'allume sur la classe appelée, et le journal liste chaque a
 index.html
 css/style.css
 js/journal.js              journal des appels (pour la démo)
-js/orion/                  les classes du framework (une par fichier)
-  BugPrevu.js
-  Joueur.js
-  Signalement.js
-  EvenementBug.js          signale : Signalement | null
-  EnregistreurVideo.js     vidéo simulée = historique des actions
-  GestionnaireBugs.js      traite les bugs, reçoit les signalements, détecte l'exploitation
-  HubAdapter.js            pattern Adapter
-js/externe/                ce qui n'est pas Orion (simulé)
-  Hub.js                   système externe
-  JeuDevinette.js          le jeu du banc de test
+js/orion/                  les classes du diagramme (une par fichier)
+  HubAdapteur.js           pattern Adapter : convertir(message): EvenementBug
+  Gestionnaire.js          traiterBug(EvenementBug)
+  EnregistreurVideo.js     enregistrer()
+  EvenementBug.js          bug, joueur, timestamp_decl, timestamp_sign
+  Bug.js                   id, description
+  Joueur.js                id, pseudo
+js/externe/                hors Orion (simulé)
+  JeuDevinette.js          le jeu du banc de test : contient les déclencheurs des bugs
+                           et envoie le message au HubAdapteur
 js/app.js                  câblage de l'interface
 ```
+
+Simulé pour la démo (hors diagramme) : la vidéo (historique des actions à l'écran), le disque des clips et la base des événements (de simples listes en mémoire).
 
 ## Diagramme de classes (version retenue)
 
 ```mermaid
 classDiagram
-    class Hub {
-        <<système externe>>
+    class HubAdapteur {
+        +convertir(message) EvenementBug
     }
-    class HubAdapter {
-        <<Adapter>>
-        +bugDeclenche(messageHub)
-        -convertir(messageHub) EvenementBug
-    }
-    class GestionnaireBugs {
-        -bugsPrevus : List~BugPrevu~
-        -evenements : List~EvenementBug~
-        +renseignerBug(bug)
-        +traiterBug(evenement)
-        +recevoirSignalement(signalement)
-        +verifierExploitation(evenement)
+    class Gestionnaire {
+        +traiterBug(EvenementBug)
     }
     class EnregistreurVideo {
-        +sauvegarder5DernieresMinutes()
-    }
-    class BugPrevu {
-        -id
-        -description
-        -declencheur
-    }
-    class Joueur {
-        -id
-        -pseudo
+        +enregistrer()
     }
     class EvenementBug {
-        -bug : BugPrevu
+        -bug : Bug
         -joueur : Joueur
-        -heure
-        -signale : Signalement
+        -timestamp_decl : String
+        -timestamp_sign : String
     }
-    class Signalement {
-        -joueur : Joueur
-        -description
-        -heure
+    class Bug {
+        -id : entier
+        -description : String
     }
-
-    Hub --> HubAdapter : prévient qu'un bug s'est déclenché
-    HubAdapter --> GestionnaireBugs : transmet l'événement
-    GestionnaireBugs --> EnregistreurVideo : demande la vidéo
-    GestionnaireBugs --> EvenementBug : crée et met à jour
-    GestionnaireBugs --> BugPrevu : renseigne
-    EvenementBug --> BugPrevu
-    EvenementBug --> Joueur
-    EvenementBug --> Signalement : signale
-    Signalement --> Joueur
+    class Joueur {
+        -id : entier
+        -pseudo : String
+    }
+    HubAdapteur --> Gestionnaire
+    HubAdapteur ..> EvenementBug
+    Gestionnaire *--> EnregistreurVideo
+    Gestionnaire ..> EvenementBug
+    EvenementBug o--> Bug
+    EvenementBug o--> Joueur
 ```

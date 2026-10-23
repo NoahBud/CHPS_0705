@@ -1,22 +1,20 @@
-// Garde en permanence les 5 dernières minutes de la partie.
-// Pour la démo, la "vidéo" est simulée par l'historique des actions du joueur.
+// EnregistreurVideo — sauvegarde les 5 dernières minutes de la partie.
+//   + enregistrer()
+//
+// Pour la démo, la "vidéo" est simulée par l'historique des actions affichées à l'écran,
+// et le "disque" par une simple liste (stockage). Ces deux éléments sont hors diagramme.
 class EnregistreurVideo {
-  constructor(dureeMs = 5 * 60 * 1000) {
-    this.dureeMs = dureeMs;
-    this.buffer = [];
+  constructor(fluxVideo, stockage) {
+    this.fluxVideo = fluxVideo; // fonction qui renvoie les images (actions) récentes
+    this.stockage = stockage;   // simulation du disque où sont rangés les clips
   }
 
-  // Appelé à chaque action du joueur (comme une image de vidéo).
-  enregistrer(action) {
-    const maintenant = new Date();
-    this.buffer.push({ heure: maintenant, action });
-    // on oublie tout ce qui a plus de 5 minutes
-    this.buffer = this.buffer.filter((img) => maintenant - img.heure <= this.dureeMs);
-  }
-
-  sauvegarder5DernieresMinutes() {
-    Journal.log("EnregistreurVideo", "sauvegarder5DernieresMinutes()",
-      `clip de ${this.buffer.length} action(s) sauvegardé`);
-    return [...this.buffer];
+  enregistrer(evenement) {
+    const cinqMinutes = 5 * 60 * 1000;
+    const maintenant = Date.now();
+    const clip = this.fluxVideo().filter((img) => maintenant - img.heure <= cinqMinutes);
+    this.stockage.push({ evenement, clip });
+    Journal.log("EnregistreurVideo", "enregistrer()", `clip de ${clip.length} image(s) sauvegardé`);
+    return clip;
   }
 }

@@ -8,20 +8,71 @@
 </head>
 <body>
   <header>
-    <h1>Orion <span>démo v0 · surcouche Kapture</span></h1>
-    <!-- Chaîne des classes : chaque bloc s'allume quand une de ses méthodes est appelée -->
-    <div class="chaine">
-      <div class="classe externe" data-classe="Hub">Hub<small>système externe</small></div>
-      <span class="fleche">→</span>
-      <div class="classe" data-classe="HubAdapter">HubAdapter<small>«Adapter»</small></div>
-      <span class="fleche">→</span>
-      <div class="classe" data-classe="GestionnaireBugs">GestionnaireBugs</div>
-      <span class="fleche">→</span>
-      <div class="pile">
-        <div class="classe" data-classe="EnregistreurVideo">EnregistreurVideo</div>
-        <div class="classe" data-classe="EvenementBug">EvenementBug<small>signale : Signalement</small></div>
-      </div>
+    <div class="barre">
+      <h1>Orion <span>démo v0 · surcouche Kapture</span></h1>
+      <button id="btn-reset" class="reset">↺ Réinitialiser les données</button>
     </div>
+
+    <!-- Le diagramme de classes retenu. Chaque classe s'allume quand une de ses méthodes est appelée. -->
+    <svg class="diagramme" viewBox="0 0 860 290" role="img" aria-label="Diagramme de classes Orion">
+      <defs>
+        <marker id="fleche" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10" fill="none" stroke="#9aa3c0" stroke-width="1.5"/>
+        </marker>
+      </defs>
+
+      <!-- liens -->
+      <g class="liens">
+        <!-- Jeu → HubAdapteur : message -->
+        <line x1="170" y1="42" x2="258" y2="42" class="pointille" marker-end="url(#fleche)"/>
+        <text x="214" y="34" class="etiquette">message</text>
+        <!-- HubAdapteur → Gestionnaire (association) -->
+        <line x1="350" y1="64" x2="350" y2="123" marker-end="url(#fleche)"/>
+        <!-- HubAdapteur ⇢ EvenementBug -->
+        <line x1="440" y1="54" x2="598" y2="123" class="pointille" marker-end="url(#fleche)"/>
+        <!-- Gestionnaire ⇢ EvenementBug -->
+        <line x1="440" y1="147" x2="558" y2="147" class="pointille" marker-end="url(#fleche)"/>
+        <!-- Gestionnaire ◆→ EnregistreurVideo -->
+        <polygon points="260,147 250,141 240,147 250,153" class="plein"/>
+        <polyline points="240,147 110,147 110,228" marker-end="url(#fleche)"/>
+        <!-- EvenementBug ◇→ Bug -->
+        <polygon points="620,169 626,179 620,189 614,179" class="vide"/>
+        <polyline points="620,189 620,205 545,205 545,228" marker-end="url(#fleche)"/>
+        <!-- EvenementBug ◇→ Joueur -->
+        <polygon points="700,169 706,179 700,189 694,179" class="vide"/>
+        <polyline points="700,189 700,205 755,205 755,228" marker-end="url(#fleche)"/>
+      </g>
+
+      <!-- classes -->
+      <g class="classe externe" data-classe="Jeu">
+        <rect x="20" y="20" width="150" height="44" rx="5"/>
+        <text x="95" y="38">Jeu</text><text x="95" y="54" class="petit">externe</text>
+      </g>
+      <g class="classe" data-classe="HubAdapteur">
+        <rect x="260" y="20" width="180" height="44" rx="5"/>
+        <text x="350" y="38">HubAdapteur</text><text x="350" y="54" class="petit">+ convertir(message)</text>
+      </g>
+      <g class="classe" data-classe="Gestionnaire">
+        <rect x="260" y="125" width="180" height="44" rx="5"/>
+        <text x="350" y="143">Gestionnaire</text><text x="350" y="159" class="petit">+ traiterBug(EvenementBug)</text>
+      </g>
+      <g class="classe" data-classe="EnregistreurVideo">
+        <rect x="20" y="230" width="180" height="44" rx="5"/>
+        <text x="110" y="248">EnregistreurVideo</text><text x="110" y="264" class="petit">+ enregistrer()</text>
+      </g>
+      <g class="classe" data-classe="EvenementBug">
+        <rect x="560" y="125" width="180" height="44" rx="5"/>
+        <text x="650" y="143">EvenementBug</text><text x="650" y="159" class="petit">timestamp_decl / _sign</text>
+      </g>
+      <g class="classe" data-classe="Bug">
+        <rect x="470" y="230" width="150" height="44" rx="5"/>
+        <text x="545" y="248">Bug</text><text x="545" y="264" class="petit">id, description</text>
+      </g>
+      <g class="classe" data-classe="Joueur">
+        <rect x="680" y="230" width="150" height="44" rx="5"/>
+        <text x="755" y="248">Joueur</text><text x="755" y="264" class="petit">id, pseudo</text>
+      </g>
+    </svg>
   </header>
 
   <main>
@@ -32,26 +83,21 @@
         <label>Pseudo <input id="pseudo" value="Noah"></label>
         <button id="btn-nouvelle-partie" class="secondaire">Nouvelle partie</button>
       </div>
-      <p class="consigne">Devine le nombre entre 0 et 1000.</p>
+      <p class="consigne">Deviner le nombre entre 0 et 1000.</p>
       <form id="form-essai" class="ligne">
-        <input id="essai" type="number" placeholder="Ton nombre" required>
+        <input id="essai" type="number" placeholder="Votre nombre" required>
         <button>Proposer</button>
       </form>
       <ul id="messages-jeu" class="messages"></ul>
-
-      <h3>Signaler un bug</h3>
-      <form id="form-signalement" class="ligne">
-        <input id="signalement" placeholder="Décris ce qui s'est passé" required>
-        <button class="secondaire">Signaler</button>
-      </form>
+      <button id="btn-signaler" class="signaler">🚩 Signaler un bug</button>
     </section>
 
     <!-- 2. Le développeur -->
     <section class="carte">
       <h2><span class="num">2</span> Développeur du jeu</h2>
-      <p class="consigne">Renseigne et paramètre les bugs prévus dans le jeu.</p>
+      <p class="consigne">Déclaration des bugs dans Orion (<code>Bug</code>) et de leur déclencheur dans le jeu.</p>
       <table>
-        <thead><tr><th>ID</th><th>Description</th><th>Déclencheur</th><th>Effet</th><th>Actif</th></tr></thead>
+        <thead><tr><th>id</th><th>description</th><th>Déclencheur (jeu)</th><th>Effet</th><th>Actif</th></tr></thead>
         <tbody id="liste-bugs"></tbody>
       </table>
       <form id="form-bug" class="ligne">
@@ -68,30 +114,34 @@
       </label>
     </section>
 
-    <!-- 3. Ce qu'Orion a enregistré -->
-    <section class="carte large">
-      <h2><span class="num">3</span> Événements de bug (vue Orion)</h2>
-      <div id="evenements"><p class="vide">Aucun bug déclenché pour l'instant. Essaie de proposer -1.</p></div>
-      <div id="libres"></div>
+    <!-- 3. Objets en mémoire -->
+    <section class="carte pleine">
+      <h2><span class="num">3</span> Objets en mémoire</h2>
+      <p class="consigne">Chaque instance créée, avec la valeur de ses attributs en direct. Un objet s'allume lorsqu'il est créé ou modifié.</p>
+      <div id="objets" class="objets"></div>
     </section>
 
-    <!-- 4. Journal des appels -->
-    <section class="carte large">
-      <h2><span class="num">4</span> Journal des appels de méthodes</h2>
+    <!-- 4. Événements -->
+    <section class="carte">
+      <h2><span class="num">4</span> Événements de bug (vue Orion)</h2>
+      <div id="evenements"><p class="vide">Aucun bug déclenché pour l'instant. Proposez -1 pour en déclencher un.</p></div>
+    </section>
+
+    <!-- 5. Journal -->
+    <section class="carte">
+      <h2><span class="num">5</span> Journal des appels de méthodes</h2>
       <ol id="journal" class="journal"></ol>
     </section>
   </main>
 
-  <!-- Ordre important : le journal, puis les classes Orion, puis l'externe, puis l'interface -->
+  <!-- Ordre important : journal, puis classes Orion, puis externe, puis interface -->
   <script src="js/journal.js"></script>
-  <script src="js/orion/BugPrevu.js"></script>
+  <script src="js/orion/Bug.js"></script>
   <script src="js/orion/Joueur.js"></script>
-  <script src="js/orion/Signalement.js"></script>
   <script src="js/orion/EvenementBug.js"></script>
   <script src="js/orion/EnregistreurVideo.js"></script>
-  <script src="js/orion/GestionnaireBugs.js"></script>
-  <script src="js/orion/HubAdapter.js"></script>
-  <script src="js/externe/Hub.js"></script>
+  <script src="js/orion/Gestionnaire.js"></script>
+  <script src="js/orion/HubAdapteur.js"></script>
   <script src="js/externe/JeuDevinette.js"></script>
   <script src="js/app.js"></script>
 </body>
